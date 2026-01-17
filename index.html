@@ -37,7 +37,7 @@
         <!-- Header -->
         <header class="mb-10 text-center relative">
             <div id="familyBadge" class="hidden inline-block bg-green-100 text-green-600 px-4 py-1 rounded-full text-sm font-bold mb-3 uppercase tracking-wider border border-green-200">
-                ✨ Versión Familiar Activada (España)
+                ✨ Versión Familiar Activa
             </div>
             <div id="standardBadge" class="inline-block bg-orange-100 text-orange-600 px-4 py-1 rounded-full text-sm font-bold mb-3 uppercase tracking-wider border border-orange-200">
                 Chef Inteligente Pro
@@ -61,12 +61,11 @@
                             <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Modelo de IA</label>
                             <div class="flex gap-2">
                                 <select id="modelSelector" class="flex-1 p-2 text-xs border border-slate-200 rounded-lg outline-none bg-white">
-                                    <option value="models/gemini-1.5-flash">Gemini 1.5 Flash (Recomendado)</option>
-                                    <option value="models/gemini-1.5-flash-latest">Gemini 1.5 Flash Latest</option>
-                                    <option value="models/gemini-2.0-flash-exp">Gemini 2.0 Flash Exp</option>
-                                    <option value="models/gemini-1.5-pro">Gemini 1.5 Pro</option>
+                                    <option value="models/gemini-1.5-flash">Gemini 1.5 Flash (Estándar)</option>
+                                    <option value="models/gemini-1.5-flash-8b">Gemini 1.5 Flash-8B (Muy rápido)</option>
+                                    <option value="models/gemini-1.5-pro">Gemini 1.5 Pro (Avanzado)</option>
                                 </select>
-                                <button onclick="checkAvailableModels()" class="bg-slate-100 p-2 rounded-lg hover:bg-slate-200 transition-colors" title="Actualizar lista de modelos disponibles">
+                                <button onclick="checkAvailableModels()" class="bg-slate-100 p-2 rounded-lg hover:bg-slate-200 transition-colors" title="Buscar modelos compatibles">
                                     🔍
                                 </button>
                             </div>
@@ -74,12 +73,12 @@
 
                         <div class="pt-2">
                             <button onclick="generateShareLink()" class="w-full bg-slate-800 text-white text-xs py-2 rounded-lg font-bold hover:bg-slate-700 transition-colors">
-                                Generar Link de Invitación
+                                Generar Link para Familiares
                             </button>
                         </div>
                         <div id="shareLinkContainer" class="hidden space-y-3 p-3 bg-slate-50 rounded-xl border border-slate-200">
-                            <p class="text-[10px] text-slate-400 font-bold uppercase text-center">Enlace para tu familia:</p>
-                            <div id="shareUrlDisplay" class="text-[10px] text-slate-600 break-all bg-white p-3 rounded-lg border border-slate-100 font-mono text-center min-h-[40px] flex items-center justify-center px-2"></div>
+                            <p class="text-[10px] text-slate-400 font-bold uppercase text-center">Link con clave incluida:</p>
+                            <div id="shareUrlDisplay" class="text-[10px] text-slate-600 break-all bg-white p-3 rounded-lg border border-slate-100 font-mono text-center min-h-[40px] flex items-center justify-center px-2 shadow-inner"></div>
                             <button onclick="copyShareLink()" id="copyShareBtn" class="w-full bg-orange-500 text-white py-2 rounded-lg text-xs font-bold active:scale-95 transition-all">
                                 Copiar Enlace
                             </button>
@@ -90,6 +89,7 @@
         </header>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Sidebar: Inputs -->
             <div class="lg:col-span-1 space-y-6">
                 <div class="bg-white p-6 rounded-3xl border border-orange-100 card-shadow">
                     <h2 class="text-xl font-bold mb-4 flex items-center gap-2 text-slate-800">
@@ -142,7 +142,7 @@
                 <div id="welcomeState" class="bg-white border-2 border-dashed border-slate-200 rounded-3xl p-12 text-center h-full flex flex-col items-center justify-center">
                     <div class="text-6xl mb-4">👨‍🍳</div>
                     <h3 class="text-2xl font-bold text-slate-800 tracking-tight">¡Hola Chef!</h3>
-                    <p class="text-slate-500 mt-2 font-light text-lg">Indica qué ingredientes tienes y crearé una receta exclusiva para ti.</p>
+                    <p class="text-slate-500 mt-2 font-light text-lg">Indica qué ingredientes tienes y crearé una receta exclusiva.</p>
                 </div>
 
                 <div id="recipeCard" class="hidden bg-white rounded-3xl border border-slate-100 card-shadow overflow-hidden">
@@ -173,7 +173,12 @@
                     </div>
                 </div>
 
-                <div id="errorBox" class="hidden mt-4 p-4 bg-rose-50 border border-rose-100 text-rose-600 rounded-2xl text-sm font-medium"></div>
+                <!-- Error Message Box con Detalle para Debugging -->
+                <div id="errorBox" class="hidden mt-4 p-5 bg-rose-50 border border-rose-200 text-rose-700 rounded-2xl text-sm leading-relaxed">
+                    <div class="font-bold mb-1">¡Vaya! Algo ha fallado:</div>
+                    <div id="errorMain" class="mb-2"></div>
+                    <div id="errorDetail" class="text-[10px] bg-white/50 p-2 rounded font-mono break-all opacity-80"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -204,12 +209,9 @@
         };
 
         function showFamilyActivation() {
-            const badgeF = document.getElementById('familyBadge');
-            const badgeS = document.getElementById('standardBadge');
-            const summary = document.getElementById('adminPanel').querySelector('summary');
-            if (badgeF) badgeF.classList.remove('hidden');
-            if (badgeS) badgeS.classList.add('hidden');
-            if (summary) summary.innerText = "⚙️ Configuración (Clave Guardada)";
+            document.getElementById('familyBadge').classList.remove('hidden');
+            document.getElementById('standardBadge').classList.add('hidden');
+            document.getElementById('adminPanel').querySelector('summary').innerText = "⚙️ Configuración (España Activa)";
         }
 
         async function checkAvailableModels() {
@@ -220,15 +222,16 @@
             }
 
             try {
+                // Probamos con v1beta para listar
                 const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}`);
                 const data = await response.json();
+                
                 if (data.models) {
                     const selector = document.getElementById('modelSelector');
                     const currentVal = selector.value;
                     selector.innerHTML = '';
                     
                     data.models.forEach(m => {
-                        // Filtrar modelos que soporten generación de texto
                         if (m.name.includes('gemini') && m.supportedGenerationMethods.includes('generateContent')) {
                             const option = document.createElement('option');
                             option.value = m.name; // Ej: models/gemini-1.5-flash
@@ -240,12 +243,12 @@
                     if (selector.querySelector(`option[value="${currentVal}"]`)) {
                         selector.value = currentVal;
                     }
-                    showError("¡Lista de modelos actualizada! Si el error 404 persiste, selecciona uno de los nuevos nombres de la lista.");
-                } else if (data.error) {
-                    showError(`Error de Google: ${data.error.message}`);
+                    showError("¡Lista de modelos actualizada!", "Si alguno da error 404, prueba con otro de la lista.");
+                } else {
+                    showError("No se pudieron listar modelos.", JSON.stringify(data));
                 }
             } catch (err) {
-                showError("No se pudo conectar con los servidores de Google para listar los modelos.");
+                showError("Fallo de conexión al buscar modelos.", err.message);
             }
         }
 
@@ -265,32 +268,21 @@
             const baseUrl = window.location.origin + window.location.pathname;
             const currentShareUrl = `${baseUrl}#invite=${keyToShare}&m=${encodeURIComponent(selectedModel)}`;
             
-            const display = document.getElementById('shareUrlDisplay');
-            display.innerText = currentShareUrl;
+            document.getElementById('shareUrlDisplay').innerText = currentShareUrl;
             document.getElementById('shareLinkContainer').classList.remove('hidden');
         }
 
         function copyShareLink() {
             const url = document.getElementById('shareUrlDisplay').innerText;
-            if (!url) return;
             const el = document.createElement('textarea');
             el.value = url;
-            el.setAttribute('readonly', '');
-            el.style.position = 'absolute';
-            el.style.left = '-9999px';
             document.body.appendChild(el);
             el.select();
-            try {
-                document.execCommand('copy');
-                const btn = document.getElementById('copyShareBtn');
-                btn.innerText = "¡Copiado!";
-                btn.classList.replace('bg-orange-500', 'bg-green-600');
-                setTimeout(() => {
-                    btn.innerText = "Copiar Enlace";
-                    btn.classList.replace('bg-green-600', 'bg-orange-500');
-                }, 2000);
-            } catch (err) { }
+            document.execCommand('copy');
             document.body.removeChild(el);
+            const btn = document.getElementById('copyShareBtn');
+            btn.innerText = "¡Copiado!";
+            setTimeout(() => btn.innerText = "Copiar Enlace", 2000);
         }
 
         async function fetchWithRetry(url, payload, retries = 3) {
@@ -305,20 +297,26 @@
                     if (response.ok) return await response.json();
                     
                     const errorData = await response.json().catch(() => ({}));
-                    const msg = errorData.error?.message || "Error desconocido";
+                    const status = response.status;
+                    const errorMsg = errorData.error?.message || "Error desconocido";
 
-                    if (response.status === 404) {
-                        throw new Error(`Error 404: El modelo especificado no existe o no tienes acceso todavía (las claves nuevas a veces tardan unos minutos en activarse).`);
+                    if (status === 404) {
+                        throw new Error(`Error 404: El modelo especificado no existe para tu clave. Intenta usar la lupa 🔍 para actualizar la lista.`);
                     }
-                    if (response.status === 401 || response.status === 403) {
-                        throw new Error(`Clave de API inválida o sin permisos (Error ${response.status}).`);
+                    if (status === 401 || status === 403) {
+                        throw new Error(`Error ${status}: La clave no tiene permisos o ha sido rechazada por Google. Revisa que esté bien copiada.`);
                     }
+                    
+                    // Si es un error de servidor, reintentamos
+                    if (status >= 500) continue;
+                    
+                    throw new Error(`Google dice: ${errorMsg}`);
                 } catch (e) {
                     if (i === retries - 1 || e.message.includes("404") || e.message.includes("Clave")) throw e;
                 }
                 await new Promise(r => setTimeout(r, 1000 * (i + 1)));
             }
-            throw new Error("No se pudo obtener respuesta del Chef. Revisa la configuración de tu API Key.");
+            throw new Error("No hay respuesta tras varios intentos.");
         }
 
         async function generateRecipe() {
@@ -326,19 +324,16 @@
             const storedKey = localStorage.getItem('chef_api_key');
             const activeKey = manualKey || storedKey || systemApiKey;
 
-            // Determinar el modelo exacto a usar
             const isPreviewEnv = (typeof __app_id !== 'undefined');
             let modelToUse = isPreviewEnv 
                 ? "models/gemini-2.5-flash-preview-09-2025" 
                 : document.getElementById('modelSelector').value;
             
-            // CORRECCIÓN CRÍTICA: Aseguramos que el nombre empiece por models/ pero SIN DUPLICARLO
-            if (!modelToUse.startsWith('models/')) {
-                modelToUse = 'models/' + modelToUse;
-            }
+            if (!modelToUse.startsWith('models/')) modelToUse = 'models/' + modelToUse;
             
-            // Usamos v1beta para máxima compatibilidad con modelos experimentales y Flash 2.0
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/${modelToUse}:generateContent?key=${activeKey}`;
+            // Usamos v1 para GitHub/Externo y v1beta para la plataforma
+            const apiVersion = isPreviewEnv ? "v1beta" : "v1";
+            const apiUrl = `https://generativelanguage.googleapis.com/${apiVersion}/${modelToUse}:generateContent?key=${activeKey}`;
             
             const ingredients = document.getElementById('ingredients').value.trim();
             const mealType = document.getElementById('mealType').value;
@@ -346,41 +341,33 @@
             
             const generateBtn = document.getElementById('generateBtn');
             const loader = document.getElementById('loader');
-            const welcomeState = document.getElementById('welcomeState');
             const recipeCard = document.getElementById('recipeCard');
             const recipeContent = document.getElementById('recipeContent');
+            const welcomeState = document.getElementById('welcomeState');
             const errorBox = document.getElementById('errorBox');
             const refreshIcon = document.getElementById('refreshIcon');
 
             if (!ingredients) {
-                showError("¡Dime qué tienes en la despensa para empezar!");
+                showError("¡Dime qué tienes para empezar!");
                 return;
             }
 
             errorBox.classList.add('hidden');
             generateBtn.disabled = true;
             loader.classList.remove('hidden');
-            if (refreshIcon) {
-                refreshIcon.classList.add('animate-spin-once');
-                setTimeout(() => refreshIcon.classList.remove('animate-spin-once'), 500);
-            }
+            if (refreshIcon) refreshIcon.classList.add('animate-spin-once');
 
-            const systemPrompt = `Eres un Chef experto Michelin en España. Crea una receta creativa y deliciosa con estos ingredientes: ${ingredients}. 
-            Tipo de comida: ${mealType}. Restricción dietética: ${diet}.
-            IMPORTANTE: Los ingredientes y los pasos de preparación DEBEN estar en líneas separadas.
-            
-            Formato de respuesta:
-            # [Nombre de la Receta]
+            const systemPrompt = `Eres un Chef experto Michelin en España. Crea una receta creativa con: ${ingredients}. 
+            Tipo: ${mealType}. Dieta: ${diet}.
+            Formato:
+            # [Nombre]
             **Tiempo:** [X] min | **Raciones:** [X]
-            
             ### 🛒 Ingredientes
-            - [Ingrediente con cantidad]
-            
+            - Ingrediente
             ### 👨‍🍳 Preparación
-            1. [Paso detallado]
-            
-            ### 💡 Truco del Chef
-            [Consejo corto y útil]`;
+            1. Paso detallado
+            ### 💡 Truco
+            [Consejo]`;
 
             try {
                 const data = await fetchWithRetry(apiUrl, { 
@@ -412,20 +399,23 @@
                     welcomeState.classList.add('hidden');
                     recipeCard.classList.remove('hidden');
                     recipeCard.scrollIntoView({ behavior: 'smooth' });
-                    
                     if (manualKey) localStorage.setItem('chef_api_key', manualKey);
+                } else {
+                    throw new Error("Google devolvió una respuesta vacía.");
                 }
             } catch (error) {
-                showError(error.message);
+                showError("Fallo al generar receta.", error.message);
             } finally {
                 generateBtn.disabled = false;
                 loader.classList.add('hidden');
+                if (refreshIcon) setTimeout(() => refreshIcon.classList.remove('animate-spin-once'), 500);
             }
         }
 
-        function showError(msg) {
+        function showError(main, detail = "") {
             const errorBox = document.getElementById('errorBox');
-            errorBox.textContent = msg;
+            document.getElementById('errorMain').innerText = main;
+            document.getElementById('errorDetail').innerText = detail;
             errorBox.classList.remove('hidden');
             errorBox.scrollIntoView({ behavior: 'smooth' });
         }
