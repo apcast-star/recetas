@@ -53,7 +53,7 @@
                     </summary>
                     <div class="p-4 space-y-4">
                         <div>
-                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Tu Gemini API Key (De Google AI Studio)</label>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Tu Gemini API Key (Solo para GitHub)</label>
                             <input type="password" id="customApiKey" placeholder="Pega tu clave aquí..." class="w-full p-2 text-xs border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-orange-400">
                         </div>
                         <div class="pt-2">
@@ -163,8 +163,8 @@
     </div>
 
     <script>
-        const systemApiKey = ""; // Inyectada por la plataforma
-        let currentShareUrl = "";
+        // La clave de API se deja vacía; el entorno la inyectará en tiempo de ejecución.
+        const apiKey = ""; 
         
         window.onload = () => {
             const hash = window.location.hash;
@@ -194,16 +194,17 @@
 
         function generateShareLink() {
             const manualKey = document.getElementById('customApiKey').value.trim();
-            const keyToShare = manualKey || systemApiKey;
+            // Prioridad: clave escrita > clave del entorno (en vista previa)
+            const keyToShare = manualKey || apiKey;
             
             if (!keyToShare) {
-                showError("No hay una clave disponible. Pega tu clave de Gemini Pro en el campo superior.");
+                showError("No hay una clave disponible para compartir. Pega tu clave de Gemini en el campo superior.");
                 return;
             }
             
             localStorage.setItem('chef_api_key', keyToShare);
             const baseUrl = window.location.origin + window.location.pathname;
-            currentShareUrl = `${baseUrl}#invite=${keyToShare}`;
+            const currentShareUrl = `${baseUrl}#invite=${keyToShare}`;
             
             const display = document.getElementById('shareUrlDisplay');
             display.innerText = currentShareUrl;
@@ -211,9 +212,10 @@
         }
 
         function copyShareLink() {
-            if (!currentShareUrl) return;
+            const url = document.getElementById('shareUrlDisplay').innerText;
+            if (!url) return;
             const el = document.createElement('textarea');
-            el.value = currentShareUrl;
+            el.value = url;
             el.setAttribute('readonly', '');
             el.style.position = 'absolute';
             el.style.left = '-9999px';
@@ -223,7 +225,7 @@
                 document.execCommand('copy');
                 const btn = document.getElementById('copyShareBtn');
                 const originalText = btn.innerText;
-                btn.innerText = "¡Copiado!";
+                btn.innerText = "¡Enlace Copiado!";
                 btn.classList.replace('bg-orange-500', 'bg-green-600');
                 setTimeout(() => {
                     btn.innerText = originalText;
@@ -245,39 +247,36 @@
                     if (response.ok) return await response.json();
                     
                     const errorData = await response.json().catch(() => ({}));
-                    const msg = errorData.error?.message || "Error desconocido";
-
                     if (response.status === 401 || response.status === 403) {
-                        throw new Error(`Clave de API no válida (${response.status}). Asegúrate de usar una clave de Gemini Pro.`);
+                        throw new Error("Clave de API inválida o expirada. Revisa la configuración.");
                     }
                     if (response.status === 404) {
-                        throw new Error("Modelo no encontrado. Revisa el nombre del modelo en el código.");
+                        throw new Error("El modelo seleccionado no está disponible para esta clave.");
                     }
                     if (response.status === 429) {
-                        throw new Error("Límite de uso superado. Por favor, espera un minuto.");
+                        throw new Error("Límite de uso alcanzado. Espera un momento.");
                     }
                 } catch (e) {
-                    if (i === retries - 1 || e.message.includes("Clave") || e.message.includes("superado")) throw e;
+                    if (i === retries - 1 || e.message.includes("Clave") || e.message.includes("Límite")) throw e;
                 }
                 await new Promise(resolve => setTimeout(resolve, delay));
                 delay *= 2;
             }
-            throw new Error("El Chef no responde. Revisa tu conexión o el estado de tu cuenta de Google AI.");
+            throw new Error("Error de conexión. Revisa tu internet o la configuración de la API.");
         }
 
         async function generateRecipe() {
             const manualKey = document.getElementById('customApiKey').value.trim();
             const storedKey = localStorage.getItem('chef_api_key');
-            const activeKey = manualKey || storedKey || systemApiKey;
+            
+            // Unificamos las posibles fuentes de la clave.
+            // Si estamos en la plataforma (Vista Previa), apiKey tendrá valor automáticamente.
+            const activeKey = manualKey || storedKey || apiKey;
 
-            if (!activeKey) {
-                showError("No hay una clave de API configurada. Revisa el panel de configuración.");
-                return;
-            }
-
-            // Seleccionar modelo: El de prueba solo funciona en la vista previa
-            // En GitHub (fuera de la plataforma) usamos gemini-1.5-flash
-            const modelToUse = (systemApiKey !== "") ? "gemini-2.5-flash-preview-09-2025" : "gemini-1.5-flash";
+            // Detección de entorno para elegir el modelo adecuado:
+            // En la plataforma usamos 2.5-flash-preview. Fuera usamos 1.5-flash.
+            const isPlatform = (typeof __app_id !== 'undefined');
+            const modelToUse = isPlatform ? "gemini-2.5-flash-preview-09-2025" : "gemini-1.5-flash";
             
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelToUse}:generateContent?key=${activeKey}`;
             
@@ -294,7 +293,7 @@
             const refreshIcon = document.getElementById('refreshIcon');
 
             if (!ingredients) {
-                showError("¡Introduce algunos ingredientes para cocinar!");
+                showError("¡Por favor, indica qué ingredientes tienes!");
                 return;
             }
 
@@ -307,20 +306,24 @@
             }
 
             const systemPrompt = `Eres un Chef experto. Crea una receta con: ${ingredients}. 
-            Tipo: ${mealType}. Dieta: ${diet}.
-            IMPORTANTE: Ingredientes y pasos siempre en líneas separadas.
+            Plato: ${mealType}. Dieta: ${diet}.
+            IMPORTANTE: Los ingredientes y los pasos de preparación deben estar en líneas separadas para facilitar la lectura.
             Formato:
             # [Nombre]
             **Tiempo:** [X] min | **Raciones:** [X]
             ### 🛒 Ingredientes
-            - Ingrediente
+            - Ingrediente 1
+            - Ingrediente 2
             ### 👨‍🍳 Preparación
-            1. Paso a paso
+            1. Paso a paso detallado
             ### 💡 Truco
-            [Consejo]`;
+            [Consejo del chef]`;
 
             try {
-                const data = await fetchWithRetry(apiUrl, { contents: [{ parts: [{ text: systemPrompt }] }] });
+                const data = await fetchWithRetry(apiUrl, { 
+                    contents: [{ parts: [{ text: systemPrompt }] }] 
+                });
+                
                 let text = data.candidates?.[0]?.content?.parts?.[0]?.text;
 
                 if (text) {
