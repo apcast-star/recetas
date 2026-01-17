@@ -37,7 +37,7 @@
         <!-- Header -->
         <header class="mb-10 text-center relative">
             <div id="familyBadge" class="hidden inline-block bg-green-100 text-green-600 px-4 py-1 rounded-full text-sm font-bold mb-3 uppercase tracking-wider border border-green-200">
-                ✨ Versión Familiar Activada
+                ✨ Versión Familiar Activada (España)
             </div>
             <div id="standardBadge" class="inline-block bg-orange-100 text-orange-600 px-4 py-1 rounded-full text-sm font-bold mb-3 uppercase tracking-wider border border-orange-200">
                 Chef Inteligente Pro
@@ -58,12 +58,12 @@
                         </div>
                         
                         <div>
-                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Modelo de IA</label>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Modelo de IA (Nombres Técnicos)</label>
                             <div class="flex gap-2">
                                 <select id="modelSelector" class="flex-1 p-2 text-xs border border-slate-200 rounded-lg outline-none bg-white">
-                                    <option value="gemini-1.5-flash">Gemini 1.5 Flash (Recomendado)</option>
-                                    <option value="gemini-2.0-flash">Gemini 2.0 Flash (Nuevo)</option>
-                                    <option value="gemini-1.5-pro">Gemini 1.5 Pro (Más lento)</option>
+                                    <option value="models/gemini-1.5-flash">Gemini 1.5 Flash (Recomendado)</option>
+                                    <option value="models/gemini-2.0-flash-exp">Gemini 2.0 Flash (Más rápido)</option>
+                                    <option value="models/gemini-1.5-pro">Gemini 1.5 Pro (Avanzado)</option>
                                 </select>
                                 <button onclick="checkAvailableModels()" class="bg-slate-100 p-2 rounded-lg hover:bg-slate-200 transition-colors" title="Verificar modelos permitidos">
                                     🔍
@@ -78,7 +78,7 @@
                         </div>
                         <div id="shareLinkContainer" class="hidden space-y-3 p-3 bg-slate-50 rounded-xl border border-slate-200">
                             <p class="text-[10px] text-slate-400 font-bold uppercase text-center">Enlace para tu familia:</p>
-                            <div id="shareUrlDisplay" class="text-[10px] text-slate-600 break-all bg-white p-3 rounded-lg border border-slate-100 font-mono text-center min-h-[40px] flex items-center justify-center"></div>
+                            <div id="shareUrlDisplay" class="text-[10px] text-slate-600 break-all bg-white p-3 rounded-lg border border-slate-100 font-mono text-center min-h-[40px] flex items-center justify-center px-2"></div>
                             <button onclick="copyShareLink()" id="copyShareBtn" class="w-full bg-orange-500 text-white py-2 rounded-lg text-xs font-bold active:scale-95 transition-all">
                                 Copiar Enlace
                             </button>
@@ -89,7 +89,6 @@
         </header>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <!-- Sidebar: Inputs -->
             <div class="lg:col-span-1 space-y-6">
                 <div class="bg-white p-6 rounded-3xl border border-orange-100 card-shadow">
                     <h2 class="text-xl font-bold mb-4 flex items-center gap-2 text-slate-800">
@@ -179,7 +178,6 @@
     </div>
 
     <script>
-        // Esta constante DEBE estar vacía; el sistema inyecta la clave automáticamente en el editor.
         const apiKey = ""; 
         
         window.onload = () => {
@@ -210,13 +208,13 @@
             const summary = document.getElementById('adminPanel').querySelector('summary');
             if (badgeF) badgeF.classList.remove('hidden');
             if (badgeS) badgeS.classList.add('hidden');
-            if (summary) summary.innerText = "⚙️ Configuración (España Activa)";
+            if (summary) summary.innerText = "⚙️ Configuración (Clave Guardada)";
         }
 
         async function checkAvailableModels() {
             const key = document.getElementById('customApiKey').value.trim() || apiKey;
             if (!key) {
-                showError("Por favor, introduce tu API Key primero.");
+                showError("Primero introduce tu clave de API.");
                 return;
             }
 
@@ -229,11 +227,10 @@
                     selector.innerHTML = '';
                     
                     data.models.forEach(m => {
-                        if (m.name.includes('gemini')) {
-                            const shortName = m.name.split('/').pop();
+                        if (m.name.includes('gemini') && m.supportedGenerationMethods.includes('generateContent')) {
                             const option = document.createElement('option');
-                            option.value = shortName;
-                            option.text = shortName.charAt(0).toUpperCase() + shortName.slice(1).replace(/-/g, ' ');
+                            option.value = m.name; // Usar el nombre técnico completo: models/gemini...
+                            option.text = m.displayName;
                             selector.appendChild(option);
                         }
                     });
@@ -241,10 +238,10 @@
                     if (selector.querySelector(`option[value="${currentVal}"]`)) {
                         selector.value = currentVal;
                     }
-                    showError("¡Modelos actualizados! Selecciona uno de la lista.");
+                    showError("¡Lista de modelos actualizada con éxito!");
                 }
             } catch (err) {
-                showError("No se pudieron listar los modelos. Revisa tu clave.");
+                showError("No se pudo conectar con Google. Revisa tu clave.");
             }
         }
 
@@ -254,7 +251,7 @@
             const keyToShare = manualKey || apiKey;
             
             if (!keyToShare) {
-                showError("No hay una clave para compartir. Ingresa una en Configuración.");
+                showError("No hay clave para compartir. Ingresa una primero.");
                 return;
             }
             
@@ -262,7 +259,7 @@
             localStorage.setItem('chef_model', selectedModel);
             
             const baseUrl = window.location.origin + window.location.pathname;
-            const currentShareUrl = `${baseUrl}#invite=${keyToShare}&m=${selectedModel}`;
+            const currentShareUrl = `${baseUrl}#invite=${keyToShare}&m=${encodeURIComponent(selectedModel)}`;
             
             const display = document.getElementById('shareUrlDisplay');
             display.innerText = currentShareUrl;
@@ -282,7 +279,7 @@
             try {
                 document.execCommand('copy');
                 const btn = document.getElementById('copyShareBtn');
-                btn.innerText = "¡Link Copiado!";
+                btn.innerText = "¡Enlace Copiado!";
                 btn.classList.replace('bg-orange-500', 'bg-green-600');
                 setTimeout(() => {
                     btn.innerText = "Copiar Enlace";
@@ -304,36 +301,40 @@
                     if (response.ok) return await response.json();
                     
                     const errorData = await response.json().catch(() => ({}));
-                    if (response.status === 401 || response.status === 403) {
-                        throw new Error("Clave de API inválida. Si estás en GitHub, configúrala arriba.");
-                    }
+                    const msg = errorData.error?.message || "Error desconocido";
+
                     if (response.status === 404) {
-                        throw new Error("Modelo no encontrado. Prueba otro en configuración.");
+                        throw new Error(`Error 404: El modelo especificado no existe o no tienes acceso.`);
+                    }
+                    if (response.status === 401 || response.status === 403) {
+                        throw new Error("Clave de API inválida o sin permisos.");
                     }
                 } catch (e) {
-                    if (i === retries - 1 || e.message.includes("Clave") || e.message.includes("Modelo")) throw e;
+                    if (i === retries - 1 || e.message.includes("404") || e.message.includes("Clave")) throw e;
                 }
                 await new Promise(r => setTimeout(r, 1000 * (i + 1)));
             }
-            throw new Error("Error de conexión. Inténtalo de nuevo.");
+            throw new Error("No se pudo obtener respuesta del Chef. Revisa la configuración.");
         }
 
         async function generateRecipe() {
             const manualKey = document.getElementById('customApiKey').value.trim();
             const storedKey = localStorage.getItem('chef_api_key');
-            
-            // La clave activa es la manual, la guardada o la automática del editor.
             const activeKey = manualKey || storedKey || apiKey;
 
-            // Detección automática de entorno para el modelo:
-            // En el editor (vista previa) usamos 2.5-flash-preview. 
-            // En GitHub usamos el selector (por defecto 1.5-flash).
-            const isPreview = (apiKey === ""); // En el editor local, apiKey empieza vacía pero se inyecta.
-            const modelToUse = isPreview && typeof __app_id !== 'undefined' 
-                ? "gemini-2.5-flash-preview-09-2025" 
+            // Detección automática del modelo:
+            const isPreview = (typeof __app_id !== 'undefined');
+            let modelToUse = isPreview 
+                ? "models/gemini-2.5-flash-preview-09-2025" 
                 : document.getElementById('modelSelector').value;
             
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelToUse}:generateContent?key=${activeKey}`;
+            // Si el modelo no empieza por models/, se lo añadimos
+            if (!modelToUse.startsWith('models/')) {
+                modelToUse = 'models/' + modelToUse;
+            }
+            
+            // Usamos v1beta siempre para asegurar compatibilidad total con Gemini 1.5 y 2.0
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/${modelToUse}:generateContent?key=${activeKey}`;
             
             const ingredients = document.getElementById('ingredients').value.trim();
             const mealType = document.getElementById('mealType').value;
@@ -348,7 +349,7 @@
             const refreshIcon = document.getElementById('refreshIcon');
 
             if (!ingredients) {
-                showError("¡Por favor, indica qué ingredientes tienes!");
+                showError("¡Escribe los ingredientes para poder ayudarte!");
                 return;
             }
 
@@ -360,18 +361,18 @@
                 setTimeout(() => refreshIcon.classList.remove('animate-spin-once'), 500);
             }
 
-            const systemPrompt = `Eres un Chef Michelin experto en cocina española y creativa. Crea una receta con: ${ingredients}. 
+            const systemPrompt = `Eres un Chef Michelin experto. Crea una receta creativa con: ${ingredients}. 
             Tipo: ${mealType}. Dieta: ${diet}.
-            IMPORTANTE: Los ingredientes y los pasos de preparación deben estar en líneas separadas.
+            IMPORTANTE: Ingredientes y pasos en líneas separadas.
             Formato:
             # [Nombre de la Receta]
             **Tiempo:** [X] min | **Raciones:** [X]
             ### 🛒 Ingredientes
-            - Ingrediente con cantidad
+            - Cantidad de ingrediente
             ### 👨‍🍳 Preparación
             1. Paso detallado
-            ### 💡 Truco del Chef
-            [Consejo corto]`;
+            ### 💡 Truco
+            [Consejo del chef]`;
 
             try {
                 const data = await fetchWithRetry(apiUrl, { 
@@ -381,7 +382,7 @@
                 let text = data.candidates?.[0]?.content?.parts?.[0]?.text;
 
                 if (text) {
-                    text = text.replace(/^# (.*$)/gim, '<h1 class="text-3xl font-bold text-slate-900 mb-4">$1</h1>');
+                    text = text.replace(/^# (.*$)/gim, '<h1 class="text-3xl font-bold text-slate-900 mb-4 tracking-tight">$1</h1>');
                     text = text.replace(/^### (.*$)/gim, '<h3 class="text-xl font-bold text-orange-600 mt-8 mb-4 border-b-2 border-orange-100 pb-2">$1</h3>');
                     text = text.replace(/\*\*(.*?)\*\*/g, '<strong class="text-slate-900 font-bold">$1</strong>');
                     
