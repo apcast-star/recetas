@@ -53,7 +53,7 @@
                     </summary>
                     <div class="p-4 space-y-4">
                         <div>
-                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Tu Gemini API Key (Para GitHub)</label>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Tu Gemini API Key (De Google AI Studio)</label>
                             <input type="password" id="customApiKey" placeholder="Pega tu clave aquí..." class="w-full p-2 text-xs border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-orange-400">
                         </div>
                         <div class="pt-2">
@@ -62,7 +62,7 @@
                             </button>
                         </div>
                         <div id="shareLinkContainer" class="hidden space-y-3 p-3 bg-slate-50 rounded-xl border border-slate-200">
-                            <p class="text-[10px] text-slate-400 font-bold uppercase text-center">Comparte este enlace con tu familia:</p>
+                            <p class="text-[10px] text-slate-400 font-bold uppercase text-center">Enlace para tu familia:</p>
                             <div id="shareUrlDisplay" class="text-[10px] text-slate-600 break-all bg-white p-3 rounded-lg border border-slate-100 font-mono text-center min-h-[40px] flex items-center justify-center"></div>
                             <button onclick="copyShareLink()" id="copyShareBtn" class="w-full bg-orange-500 text-white py-2 rounded-lg text-xs font-bold active:scale-95 transition-all">
                                 Copiar Enlace
@@ -163,8 +163,7 @@
     </div>
 
     <script>
-        const apiKey = ""; // La plataforma inyecta la clave automáticamente aquí
-        const modelName = "gemini-2.5-flash-preview-09-2025";
+        const systemApiKey = ""; // Inyectada por la plataforma
         let currentShareUrl = "";
         
         window.onload = () => {
@@ -195,11 +194,10 @@
 
         function generateShareLink() {
             const manualKey = document.getElementById('customApiKey').value.trim();
-            // Si hay clave manual la usamos, si no usamos la apiKey inyectada (si existe)
-            const keyToShare = manualKey || apiKey;
+            const keyToShare = manualKey || systemApiKey;
             
             if (!keyToShare) {
-                showError("No hay una clave disponible para compartir. Por favor, introduce tu clave en el campo superior.");
+                showError("No hay una clave disponible. Pega tu clave de Gemini Pro en el campo superior.");
                 return;
             }
             
@@ -247,29 +245,42 @@
                     if (response.ok) return await response.json();
                     
                     const errorData = await response.json().catch(() => ({}));
+                    const msg = errorData.error?.message || "Error desconocido";
+
                     if (response.status === 401 || response.status === 403) {
-                        throw new Error("La clave de API no es válida. Revisa la configuración.");
+                        throw new Error(`Clave de API no válida (${response.status}). Asegúrate de usar una clave de Gemini Pro.`);
+                    }
+                    if (response.status === 404) {
+                        throw new Error("Modelo no encontrado. Revisa el nombre del modelo en el código.");
                     }
                     if (response.status === 429) {
-                        throw new Error("Demasiadas peticiones. Por favor, espera un minuto.");
+                        throw new Error("Límite de uso superado. Por favor, espera un minuto.");
                     }
-                    if (response.status < 500) break; 
                 } catch (e) {
-                    if (i === retries - 1 || e.message.includes("clave") || e.message.includes("peticiones")) throw e;
+                    if (i === retries - 1 || e.message.includes("Clave") || e.message.includes("superado")) throw e;
                 }
                 await new Promise(resolve => setTimeout(resolve, delay));
                 delay *= 2;
             }
-            throw new Error("El Chef no responde. Revisa tu conexión a internet o la clave de API.");
+            throw new Error("El Chef no responde. Revisa tu conexión o el estado de tu cuenta de Google AI.");
         }
 
         async function generateRecipe() {
             const manualKey = document.getElementById('customApiKey').value.trim();
             const storedKey = localStorage.getItem('chef_api_key');
-            // Prioridad: 1. Manual, 2. Guardada, 3. Inyectada por entorno
-            const activeKey = manualKey || storedKey || apiKey;
+            const activeKey = manualKey || storedKey || systemApiKey;
 
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${activeKey}`;
+            if (!activeKey) {
+                showError("No hay una clave de API configurada. Revisa el panel de configuración.");
+                return;
+            }
+
+            // Seleccionar modelo: El de prueba solo funciona en la vista previa
+            // En GitHub (fuera de la plataforma) usamos gemini-1.5-flash
+            const modelToUse = (systemApiKey !== "") ? "gemini-2.5-flash-preview-09-2025" : "gemini-1.5-flash";
+            
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelToUse}:generateContent?key=${activeKey}`;
+            
             const ingredients = document.getElementById('ingredients').value.trim();
             const mealType = document.getElementById('mealType').value;
             const diet = document.getElementById('diet').value;
@@ -283,7 +294,7 @@
             const refreshIcon = document.getElementById('refreshIcon');
 
             if (!ingredients) {
-                showError("¡Dime qué ingredientes tienes para empezar!");
+                showError("¡Introduce algunos ingredientes para cocinar!");
                 return;
             }
 
@@ -299,12 +310,12 @@
             Tipo: ${mealType}. Dieta: ${diet}.
             IMPORTANTE: Ingredientes y pasos siempre en líneas separadas.
             Formato:
-            # [Nombre de la Receta]
+            # [Nombre]
             **Tiempo:** [X] min | **Raciones:** [X]
             ### 🛒 Ingredientes
-            - Ingrediente con cantidad
+            - Ingrediente
             ### 👨‍🍳 Preparación
-            1. Paso detallado
+            1. Paso a paso
             ### 💡 Truco
             [Consejo]`;
 
