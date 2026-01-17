@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chef IA - Generador de Recetas</title>
+    <title>Chef IA - Recetas Familiares</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap');
@@ -36,22 +36,38 @@
     <div class="max-w-5xl mx-auto p-4 md:p-8">
         <!-- Header -->
         <header class="mb-10 text-center relative">
-            <div class="inline-block bg-orange-100 text-orange-600 px-4 py-1 rounded-full text-sm font-bold mb-3 uppercase tracking-wider">
-                Compatible con GitHub Pages
+            <div id="familyBadge" class="hidden inline-block bg-green-100 text-green-600 px-4 py-1 rounded-full text-sm font-bold mb-3 uppercase tracking-wider">
+                ✨ Versión Familiar Activada
             </div>
-            <h1 class="text-5xl font-bold text-slate-900 tracking-tight">Chef <span class="text-orange-500"> listillo </span></h1>
-            <p class="text-slate-500 mt-3 text-lg">Dime qué tienes y a vé que hago </p>
+            <div id="standardBadge" class="inline-block bg-orange-100 text-orange-600 px-4 py-1 rounded-full text-sm font-bold mb-3 uppercase tracking-wider">
+                Chef Inteligente Personal
+            </div>
+            <h1 class="text-5xl font-bold text-slate-900 tracking-tight">Chef <span class="text-orange-500">Inteligente</span></h1>
+            <p class="text-slate-500 mt-3 text-lg">Crea recetas increíbles con lo que tengas en casa.</p>
             
-            <!-- Configuración de API Key (Para GitHub) -->
-            <div class="mt-6 max-w-xs mx-auto">
-                <details class="text-left bg-white/50 rounded-xl border border-orange-100 overflow-hidden">
-                    <summary class="p-2 text-xs font-bold text-slate-400 cursor-pointer hover:text-orange-500 transition-colors text-center">
-                        Configuración de API (GitHub)
+            <!-- Configuración para el Dueño (Generar Link) -->
+            <div class="mt-6 max-w-sm mx-auto">
+                <details id="adminPanel" class="text-left bg-white/80 backdrop-blur rounded-2xl border border-orange-100 overflow-hidden shadow-sm">
+                    <summary class="p-3 text-xs font-bold text-slate-500 cursor-pointer hover:text-orange-600 transition-colors text-center">
+                        ⚙️ Configuración y Enlace Familiar
                     </summary>
-                    <div class="p-3 space-y-2">
-                        <label class="block text-[10px] font-bold text-slate-500 uppercase">Gemini API Key</label>
-                        <input type="password" id="customApiKey" placeholder="Pega tu clave aquí..." class="w-full p-2 text-xs border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-orange-400">
-                        <p class="text-[9px] text-slate-400 italic">Obligatorio si lo usas fuera de este editor.</p>
+                    <div class="p-4 space-y-4">
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Tu Gemini API Key</label>
+                            <input type="password" id="customApiKey" placeholder="Pega tu clave aquí..." class="w-full p-2 text-xs border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-orange-400">
+                        </div>
+                        <div class="pt-2">
+                            <button onclick="generateShareLink()" class="w-full bg-slate-800 text-white text-xs py-2 rounded-lg font-bold hover:bg-slate-700 transition-colors">
+                                Generar Link para Familiares
+                            </button>
+                        </div>
+                        <div id="shareLinkContainer" class="hidden space-y-2">
+                            <p class="text-[10px] text-slate-400 italic">Copia este link y envíalo por WhatsApp. ¡Ya tendrá la clave incluida!</p>
+                            <div class="flex gap-2">
+                                <input type="text" id="shareUrlInput" readonly class="flex-1 p-2 text-[10px] bg-slate-50 border border-slate-200 rounded-lg">
+                                <button onclick="copyShareLink()" class="bg-orange-500 text-white px-3 rounded-lg text-[10px] font-bold">Copiar Link</button>
+                            </div>
+                        </div>
                     </div>
                 </details>
             </div>
@@ -65,38 +81,39 @@
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
                         </svg>
-                        Vamo ar Lío 
+                        ¿Qué cocinamos?
                     </h2>
                     
                     <div class="space-y-4">
                         <div>
-                            <label class="block text-sm font-semibold text-slate-600 mb-2">TENGO:</label>
-                            <textarea id="ingredients" rows="3" class="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all text-sm" placeholder="Ej: Pollo, espinacas, nata, ajo..."></textarea>
+                            <label class="block text-sm font-semibold text-slate-600 mb-2">Ingredientes que tienes:</label>
+                            <textarea id="ingredients" rows="3" class="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all text-sm" placeholder="Ej: Huevos, patatas, cebolla..."></textarea>
                         </div>
 
-                        <div>
-                            <label class="block text-sm font-semibold text-slate-600 mb-2">Tipo de plato:</label>
-                            <select id="mealType" class="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none bg-white text-sm">
-                                <option value="almuerzo">Almuerzo / Cena</option>
-                                <option value="desayuno">Desayuno</option>
-                                <option value="postre">Postre / Dulce</option>
-                                <option value="snack">Snack rápido</option>
-                            </select>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 mb-2 uppercase">Plato</label>
+                                <select id="mealType" class="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none bg-white text-xs">
+                                    <option value="almuerzo">Principal</option>
+                                    <option value="desayuno">Desayuno</option>
+                                    <option value="postre">Postre</option>
+                                    <option value="snack">Snack</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 mb-2 uppercase">Dieta</label>
+                                <select id="diet" class="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none bg-white text-xs">
+                                    <option value="ninguna">Cualquiera</option>
+                                    <option value="vegetariana">Vegetariana</option>
+                                    <option value="vegana">Vegana</option>
+                                    <option value="keto">Keto</option>
+                                    <option value="sin-gluten">Sin Gluten</option>
+                                </select>
+                            </div>
                         </div>
 
-                        <div>
-                            <label class="block text-sm font-semibold text-slate-600 mb-2">Dieta / Preferencias:</label>
-                            <select id="diet" class="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none bg-white text-sm">
-                                <option value="ninguna">Sin restricciones</option>
-                                <option value="vegetariana">Vegetariana</option>
-                                <option value="vegana">Vegana</option>
-                                <option value="keto">Keto / Bajo en carbos</option>
-                                <option value="sin-gluten">Sin Gluten</option>
-                            </select>
-                        </div>
-
-                        <button onclick="generateRecipe()" id="generateBtn" class="w-full bg-orange-500 hover:bg-orange-600 text-white py-4 rounded-2xl font-bold shadow-lg shadow-orange-100 transition-all active:scale-95 flex items-center justify-center gap-3 mt-4">
-                            <span>¡Cocinar ahora!</span>
+                        <button onclick="generateRecipe()" id="generateBtn" class="w-full bg-orange-500 hover:bg-orange-600 text-white py-4 rounded-2xl font-bold shadow-lg shadow-orange-100 transition-all active:scale-95 flex items-center justify-center gap-3 mt-2">
+                            <span>¡Generar Receta!</span>
                             <svg id="loader" class="hidden animate-spin h-5 w-5 text-white" viewBox="0 0 24 24">
                                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -109,9 +126,9 @@
             <!-- Main Content: Recipe Output -->
             <div class="lg:col-span-2">
                 <div id="welcomeState" class="bg-white border-2 border-dashed border-slate-200 rounded-3xl p-12 text-center">
-                    <div class="text-6xl mb-4">🍳</div>
-                    <h3 class="text-2xl font-bold text-slate-800">Vamo a vé que preparo </h3>
-                    <p class="text-slate-500 mt-2">Mete tus ingredientes  a vé que hace la IA .</p>
+                    <div class="text-6xl mb-4">👨‍🍳</div>
+                    <h3 class="text-2xl font-bold text-slate-800">¿Hambre?</h3>
+                    <p class="text-slate-500 mt-2">Escribe tus ingredientes y el Chef hará su magia.</p>
                 </div>
 
                 <div id="recipeCard" class="hidden bg-white rounded-3xl border border-slate-100 card-shadow overflow-hidden">
@@ -120,14 +137,14 @@
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                             </svg>
-                            a penzao esto....a vé que te parese?
+                            ¡Buen provecho!
                         </h2>
                         <div class="flex items-center gap-2 w-full sm:w-auto">
-                            <button onclick="generateRecipe()" id="refreshBtn" class="flex-1 sm:flex-none bg-white/20 hover:bg-white/30 p-2 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 px-4" title="Generar otra receta">
+                            <button onclick="generateRecipe()" id="refreshBtn" class="flex-1 sm:flex-none bg-white/20 hover:bg-white/30 p-2 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 px-4">
                                 <svg xmlns="http://www.w3.org/2000/svg" id="refreshIcon" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                                 </svg>
-                                <span>Nuevo</span>
+                                <span>Otra</span>
                             </button>
                             <button onclick="copyRecipe()" class="flex-1 sm:flex-none bg-white/20 hover:bg-white/30 px-4 py-2 rounded-xl text-sm font-bold transition-colors flex items-center justify-center gap-2">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -150,6 +167,50 @@
     <script>
         const modelName = "gemini-2.5-flash-preview-09-2025";
         
+        // Al cargar la página, comprobar si hay una clave en la URL o en memoria
+        window.onload = () => {
+            const hash = window.location.hash;
+            if (hash && hash.startsWith('#invite=')) {
+                const inviteKey = hash.replace('#invite=', '');
+                localStorage.setItem('chef_api_key', inviteKey);
+                // Limpiar la URL para que no se vea la clave siempre
+                window.history.replaceState(null, null, window.location.pathname);
+                showFamilyActivation();
+            } else if (localStorage.getItem('chef_api_key')) {
+                showFamilyActivation();
+                document.getElementById('customApiKey').value = localStorage.getItem('chef_api_key');
+            }
+        };
+
+        function showFamilyActivation() {
+            document.getElementById('familyBadge').classList.remove('hidden');
+            document.getElementById('standardBadge').classList.add('hidden');
+            document.getElementById('adminPanel').querySelector('summary').innerText = "⚙️ Configuración (Clave guardada)";
+        }
+
+        function generateShareLink() {
+            const key = document.getElementById('customApiKey').value.trim();
+            if (!key) {
+                showError("Primero ingresa una clave para generar el link.");
+                return;
+            }
+            localStorage.setItem('chef_api_key', key);
+            const baseUrl = window.location.href.split('#')[0];
+            const shareUrl = `${baseUrl}#invite=${key}`;
+            
+            document.getElementById('shareUrlInput').value = shareUrl;
+            document.getElementById('shareLinkContainer').classList.remove('hidden');
+        }
+
+        function copyShareLink() {
+            const input = document.getElementById('shareUrlInput');
+            input.select();
+            document.execCommand('copy');
+            const btn = document.querySelector('button[onclick="copyShareLink()"]');
+            btn.innerText = "¡Copiado!";
+            setTimeout(() => btn.innerText = "Copiar Link", 2000);
+        }
+
         async function fetchWithRetry(url, payload, retries = 5, delay = 1000) {
             for (let i = 0; i < retries; i++) {
                 try {
@@ -160,25 +221,30 @@
                     });
                     if (response.ok) return await response.json();
                     if (response.status === 401 || response.status === 403) {
-                        throw new Error("API Key inválida o no proporcionada. Configúrala arriba.");
+                        throw new Error("Clave de API no válida. Pide un nuevo link de invitación.");
                     }
                     if (response.status !== 429 && response.status < 500) break; 
                 } catch (e) {
-                    if (i === retries - 1 || e.message.includes("API Key")) throw e;
+                    if (i === retries - 1 || e.message.includes("Clave")) throw e;
                 }
                 await new Promise(resolve => setTimeout(resolve, delay));
                 delay *= 2;
             }
-            throw new Error("El Chef está ocupado. Por favor, inténtalo de nuevo en unos segundos.");
+            throw new Error("El Chef está descansando. Inténtalo en un momento.");
         }
 
         async function generateRecipe() {
-            // Prioridad: 1. Input manual (GitHub) | 2. Variable global (Entorno actual)
+            // Obtener la clave de: 1. Input | 2. LocalStorage | 3. Entorno (vacío)
             const manualKey = document.getElementById('customApiKey').value.trim();
-            const apiKey = manualKey || ""; // El entorno inyecta la clave automáticamente si esta cadena está vacía
+            const storedKey = localStorage.getItem('chef_api_key');
+            const apiKey = manualKey || storedKey || ""; 
             
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+            if (!apiKey) {
+                showError("No hay una clave de API configurada. Usa el link de invitación.");
+                return;
+            }
 
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
             const ingredients = document.getElementById('ingredients').value.trim();
             const mealType = document.getElementById('mealType').value;
             const diet = document.getElementById('diet').value;
@@ -192,7 +258,7 @@
             const refreshIcon = document.getElementById('refreshIcon');
 
             if (!ingredients) {
-                showError("Por favor, dime qué ingredientes tienes para poder ayudarte.");
+                showError("¡Dime qué tienes en la cocina primero!");
                 return;
             }
 
@@ -204,35 +270,28 @@
                 setTimeout(() => refreshIcon.classList.remove('animate-spin-once'), 500);
             }
 
-            const systemPrompt = `Eres un Chef con estrella Michelin experto en crear recetas creativas. 
-            El usuario tiene: ${ingredients}. 
-            Busca una receta para ${mealType} y que se ajuste a una dieta ${diet}.
-            IMPORTANTE: Los ingredientes y los pasos deben aparecer en líneas separadas.
-            
-            Formatea la respuesta SIEMPRE así:
-            # [Nombre de la Receta]
-            **Tiempo:** [X] min | **Porciones:** [X]
-            
+            const systemPrompt = `Eres un Chef experto. Crea una receta con: ${ingredients}. 
+            Tipo: ${mealType}. Dieta: ${diet}.
+            Formato:
+            # [Nombre]
+            **Tiempo:** [X] min | **Raciones:** [X]
             ### 🛒 Ingredientes
-            - Ingrediente 1 con cantidad
-            - Ingrediente 2 con cantidad
-            
+            - Ingrediente 1
+            - Ingrediente 2
             ### 👨‍🍳 Preparación
-            1. Primer paso detallado
-            2. Segundo paso detallado
-            
-            ### 💡 Truco del Chef
-            [Consejo corto]`;
-
-            const payload = {
-                contents: [{ parts: [{ text: systemPrompt }] }]
-            };
+            1. Paso 1
+            2. Paso 2
+            ### 💡 Truco
+            [Consejo]`;
 
             try {
-                const data = await fetchWithRetry(apiUrl, payload);
+                const data = await fetchWithRetry(apiUrl, { contents: [{ parts: [{ text: systemPrompt }] }] });
                 let text = data.candidates?.[0]?.content?.parts?.[0]?.text;
 
                 if (text) {
+                    // Guardar clave exitosa
+                    if (manualKey) localStorage.setItem('chef_api_key', manualKey);
+
                     text = text.replace(/^# (.*$)/gim, '<h1 class="text-3xl font-bold text-slate-900 mb-4">$1</h1>');
                     text = text.replace(/^### (.*$)/gim, '<h3 class="text-xl font-bold text-orange-600 mt-8 mb-4 border-b pb-2">$1</h3>');
                     text = text.replace(/\*\*(.*?)\*\*/g, '<strong class="text-slate-900 font-bold">$1</strong>');
@@ -279,9 +338,8 @@
             document.execCommand('copy');
             document.body.removeChild(el);
             const btn = document.querySelector('button[onclick="copyRecipe()"] span');
-            const originalText = btn.innerText;
             btn.innerText = "¡Copiado!";
-            setTimeout(() => btn.innerText = originalText, 2000);
+            setTimeout(() => btn.innerText = "Copiar", 2000);
         }
     </script>
 </body>
