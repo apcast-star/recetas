@@ -40,12 +40,12 @@
                 ✨ Versión Familiar Activada
             </div>
             <div id="standardBadge" class="inline-block bg-orange-100 text-orange-600 px-4 py-1 rounded-full text-sm font-bold mb-3 uppercase tracking-wider">
-                Chef Inteligente Personal
+                Chef Inteligente Pro
             </div>
             <h1 class="text-5xl font-bold text-slate-900 tracking-tight">Chef <span class="text-orange-500">Inteligente</span></h1>
             <p class="text-slate-500 mt-3 text-lg">Crea recetas increíbles con lo que tengas en casa.</p>
             
-            <!-- Configuración para el Dueño (Generar Link) -->
+            <!-- Configuración para el Dueño -->
             <div class="mt-6 max-w-sm mx-auto">
                 <details id="adminPanel" class="text-left bg-white/80 backdrop-blur rounded-2xl border border-orange-100 overflow-hidden shadow-sm">
                     <summary class="p-3 text-xs font-bold text-slate-500 cursor-pointer hover:text-orange-600 transition-colors text-center">
@@ -53,20 +53,20 @@
                     </summary>
                     <div class="p-4 space-y-4">
                         <div>
-                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Tu Gemini API Key</label>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Tu Gemini API Key (Para GitHub)</label>
                             <input type="password" id="customApiKey" placeholder="Pega tu clave aquí..." class="w-full p-2 text-xs border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-orange-400">
                         </div>
                         <div class="pt-2">
                             <button onclick="generateShareLink()" class="w-full bg-slate-800 text-white text-xs py-2 rounded-lg font-bold hover:bg-slate-700 transition-colors">
-                                Generar Link para Familiares
+                                Generar Link de Invitación
                             </button>
                         </div>
-                        <div id="shareLinkContainer" class="hidden space-y-2">
-                            <p class="text-[10px] text-slate-400 italic">Copia este link y envíalo por WhatsApp. ¡Ya tendrá la clave incluida!</p>
-                            <div class="flex gap-2">
-                                <input type="text" id="shareUrlInput" readonly onfocus="this.select()" class="flex-1 p-2 text-[10px] bg-slate-50 border border-slate-200 rounded-lg outline-none" placeholder="El enlace aparecerá aquí...">
-                                <button onclick="copyShareLink()" id="copyShareBtn" class="bg-orange-500 text-white px-3 rounded-lg text-[10px] font-bold whitespace-nowrap">Copiar Link</button>
-                            </div>
+                        <div id="shareLinkContainer" class="hidden space-y-3 p-3 bg-slate-50 rounded-xl border border-slate-200">
+                            <p class="text-[10px] text-slate-400 font-bold uppercase text-center">Comparte este enlace con tu familia:</p>
+                            <div id="shareUrlDisplay" class="text-[10px] text-slate-600 break-all bg-white p-3 rounded-lg border border-slate-100 font-mono text-center min-h-[40px] flex items-center justify-center"></div>
+                            <button onclick="copyShareLink()" id="copyShareBtn" class="w-full bg-orange-500 text-white py-2 rounded-lg text-xs font-bold active:scale-95 transition-all">
+                                Copiar Enlace
+                            </button>
                         </div>
                     </div>
                 </details>
@@ -74,7 +74,6 @@
         </header>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <!-- Sidebar: Inputs -->
             <div class="lg:col-span-1 space-y-6">
                 <div class="bg-white p-6 rounded-3xl border border-orange-100 card-shadow">
                     <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
@@ -87,12 +86,12 @@
                     <div class="space-y-4">
                         <div>
                             <label class="block text-sm font-semibold text-slate-600 mb-2">Ingredientes que tienes:</label>
-                            <textarea id="ingredients" rows="3" class="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all text-sm" placeholder="Ej: Huevos, patatas, cebolla..."></textarea>
+                            <textarea id="ingredients" rows="3" class="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all text-sm" placeholder="Ej: Pollo, arroz, cebolla..."></textarea>
                         </div>
 
                         <div class="grid grid-cols-2 gap-3">
                             <div>
-                                <label class="block text-xs font-bold text-slate-500 mb-2 uppercase">Plato</label>
+                                <label class="block text-xs font-bold text-slate-500 mb-2 uppercase text-slate-400">Plato</label>
                                 <select id="mealType" class="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none bg-white text-xs text-slate-700">
                                     <option value="almuerzo">Principal</option>
                                     <option value="desayuno">Desayuno</option>
@@ -101,7 +100,7 @@
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-xs font-bold text-slate-500 mb-2 uppercase">Dieta</label>
+                                <label class="block text-xs font-bold text-slate-500 mb-2 uppercase text-slate-400">Dieta</label>
                                 <select id="diet" class="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none bg-white text-xs text-slate-700">
                                     <option value="ninguna">Cualquiera</option>
                                     <option value="vegetariana">Vegetariana</option>
@@ -123,7 +122,6 @@
                 </div>
             </div>
 
-            <!-- Main Content: Recipe Output -->
             <div class="lg:col-span-2">
                 <div id="welcomeState" class="bg-white border-2 border-dashed border-slate-200 rounded-3xl p-12 text-center">
                     <div class="text-6xl mb-4">👨‍🍳</div>
@@ -165,12 +163,13 @@
     </div>
 
     <script>
+        const apiKey = ""; // La plataforma inyecta la clave automáticamente aquí
         const modelName = "gemini-2.5-flash-preview-09-2025";
+        let currentShareUrl = "";
         
         window.onload = () => {
             const hash = window.location.hash;
             if (hash && hash.includes('invite=')) {
-                // Usar URLSearchParams para ser más robustos
                 const params = new URLSearchParams(hash.replace('#', '?'));
                 const inviteKey = params.get('invite');
                 if (inviteKey) {
@@ -189,58 +188,51 @@
             const badgeF = document.getElementById('familyBadge');
             const badgeS = document.getElementById('standardBadge');
             const summary = document.getElementById('adminPanel').querySelector('summary');
-            
             if (badgeF) badgeF.classList.remove('hidden');
             if (badgeS) badgeS.classList.add('hidden');
             if (summary) summary.innerText = "⚙️ Configuración (Clave guardada)";
         }
 
         function generateShareLink() {
-            const keyInput = document.getElementById('customApiKey');
-            const key = keyInput.value.trim();
+            const manualKey = document.getElementById('customApiKey').value.trim();
+            // Si hay clave manual la usamos, si no usamos la apiKey inyectada (si existe)
+            const keyToShare = manualKey || apiKey;
             
-            if (!key) {
-                showError("Primero ingresa una clave para generar el link.");
+            if (!keyToShare) {
+                showError("No hay una clave disponible para compartir. Por favor, introduce tu clave en el campo superior.");
                 return;
             }
             
-            localStorage.setItem('chef_api_key', key);
-            
-            // Construcción robusta de la URL base
+            localStorage.setItem('chef_api_key', keyToShare);
             const baseUrl = window.location.origin + window.location.pathname;
-            const shareUrl = `${baseUrl}#invite=${key}`;
+            currentShareUrl = `${baseUrl}#invite=${keyToShare}`;
             
-            const shareInput = document.getElementById('shareUrlInput');
-            const container = document.getElementById('shareLinkContainer');
-            
-            // Forzar limpieza y asignación para evitar que el navegador "pegue" cosas
-            shareInput.value = ""; 
-            shareInput.value = shareUrl;
-            
-            container.classList.remove('hidden');
+            const display = document.getElementById('shareUrlDisplay');
+            display.innerText = currentShareUrl;
+            document.getElementById('shareLinkContainer').classList.remove('hidden');
         }
 
         function copyShareLink() {
-            const input = document.getElementById('shareUrlInput');
-            const btn = document.getElementById('copyShareBtn');
-            
-            // Seleccionar y copiar
-            input.select();
-            input.setSelectionRange(0, 99999); // Para móviles
-            
+            if (!currentShareUrl) return;
+            const el = document.createElement('textarea');
+            el.value = currentShareUrl;
+            el.setAttribute('readonly', '');
+            el.style.position = 'absolute';
+            el.style.left = '-9999px';
+            document.body.appendChild(el);
+            el.select();
             try {
                 document.execCommand('copy');
+                const btn = document.getElementById('copyShareBtn');
                 const originalText = btn.innerText;
                 btn.innerText = "¡Copiado!";
                 btn.classList.replace('bg-orange-500', 'bg-green-600');
-                
                 setTimeout(() => {
                     btn.innerText = originalText;
                     btn.classList.replace('bg-green-600', 'bg-orange-500');
                 }, 2000);
-            } catch (err) {
-                console.error('Error al copiar', err);
-            }
+            } catch (err) { console.error(err); }
+            document.body.removeChild(el);
         }
 
         async function fetchWithRetry(url, payload, retries = 5, delay = 1000) {
@@ -251,31 +243,33 @@
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
                     });
+                    
                     if (response.ok) return await response.json();
+                    
+                    const errorData = await response.json().catch(() => ({}));
                     if (response.status === 401 || response.status === 403) {
-                        throw new Error("Clave de API no válida. Pide un nuevo link de invitación.");
+                        throw new Error("La clave de API no es válida. Revisa la configuración.");
                     }
-                    if (response.status !== 429 && response.status < 500) break; 
+                    if (response.status === 429) {
+                        throw new Error("Demasiadas peticiones. Por favor, espera un minuto.");
+                    }
+                    if (response.status < 500) break; 
                 } catch (e) {
-                    if (i === retries - 1 || e.message.includes("Clave")) throw e;
+                    if (i === retries - 1 || e.message.includes("clave") || e.message.includes("peticiones")) throw e;
                 }
                 await new Promise(resolve => setTimeout(resolve, delay));
                 delay *= 2;
             }
-            throw new Error("El Chef está descansando. Inténtalo en un momento.");
+            throw new Error("El Chef no responde. Revisa tu conexión a internet o la clave de API.");
         }
 
         async function generateRecipe() {
             const manualKey = document.getElementById('customApiKey').value.trim();
             const storedKey = localStorage.getItem('chef_api_key');
-            const apiKey = manualKey || storedKey || ""; 
-            
-            if (!apiKey) {
-                showError("No hay una clave de API configurada. Usa el link de invitación.");
-                return;
-            }
+            // Prioridad: 1. Manual, 2. Guardada, 3. Inyectada por entorno
+            const activeKey = manualKey || storedKey || apiKey;
 
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${activeKey}`;
             const ingredients = document.getElementById('ingredients').value.trim();
             const mealType = document.getElementById('mealType').value;
             const diet = document.getElementById('diet').value;
@@ -289,7 +283,7 @@
             const refreshIcon = document.getElementById('refreshIcon');
 
             if (!ingredients) {
-                showError("¡Dime qué tienes en la cocina primero!");
+                showError("¡Dime qué ingredientes tienes para empezar!");
                 return;
             }
 
@@ -303,15 +297,14 @@
 
             const systemPrompt = `Eres un Chef experto. Crea una receta con: ${ingredients}. 
             Tipo: ${mealType}. Dieta: ${diet}.
+            IMPORTANTE: Ingredientes y pasos siempre en líneas separadas.
             Formato:
-            # [Nombre]
+            # [Nombre de la Receta]
             **Tiempo:** [X] min | **Raciones:** [X]
             ### 🛒 Ingredientes
-            - Ingrediente 1
-            - Ingrediente 2
+            - Ingrediente con cantidad
             ### 👨‍🍳 Preparación
-            1. Paso 1
-            2. Paso 2
+            1. Paso detallado
             ### 💡 Truco
             [Consejo]`;
 
@@ -320,8 +313,6 @@
                 let text = data.candidates?.[0]?.content?.parts?.[0]?.text;
 
                 if (text) {
-                    if (manualKey) localStorage.setItem('chef_api_key', manualKey);
-
                     text = text.replace(/^# (.*$)/gim, '<h1 class="text-3xl font-bold text-slate-900 mb-4">$1</h1>');
                     text = text.replace(/^### (.*$)/gim, '<h3 class="text-xl font-bold text-orange-600 mt-8 mb-4 border-b pb-2">$1</h3>');
                     text = text.replace(/\*\*(.*?)\*\*/g, '<strong class="text-slate-900 font-bold">$1</strong>');
@@ -344,6 +335,8 @@
                     welcomeState.classList.add('hidden');
                     recipeCard.classList.remove('hidden');
                     recipeCard.scrollIntoView({ behavior: 'smooth' });
+                    
+                    if (manualKey) localStorage.setItem('chef_api_key', manualKey);
                 }
             } catch (error) {
                 showError(error.message);
@@ -357,6 +350,7 @@
             const errorBox = document.getElementById('errorBox');
             errorBox.textContent = msg;
             errorBox.classList.remove('hidden');
+            errorBox.scrollIntoView({ behavior: 'smooth' });
         }
 
         function copyRecipe() {
