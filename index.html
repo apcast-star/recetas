@@ -64,8 +64,8 @@
                         <div id="shareLinkContainer" class="hidden space-y-2">
                             <p class="text-[10px] text-slate-400 italic">Copia este link y envíalo por WhatsApp. ¡Ya tendrá la clave incluida!</p>
                             <div class="flex gap-2">
-                                <input type="text" id="shareUrlInput" readonly class="flex-1 p-2 text-[10px] bg-slate-50 border border-slate-200 rounded-lg">
-                                <button onclick="copyShareLink()" class="bg-orange-500 text-white px-3 rounded-lg text-[10px] font-bold">Copiar Link</button>
+                                <input type="text" id="shareUrlInput" readonly onfocus="this.select()" class="flex-1 p-2 text-[10px] bg-slate-50 border border-slate-200 rounded-lg outline-none" placeholder="El enlace aparecerá aquí...">
+                                <button onclick="copyShareLink()" id="copyShareBtn" class="bg-orange-500 text-white px-3 rounded-lg text-[10px] font-bold whitespace-nowrap">Copiar Link</button>
                             </div>
                         </div>
                     </div>
@@ -93,7 +93,7 @@
                         <div class="grid grid-cols-2 gap-3">
                             <div>
                                 <label class="block text-xs font-bold text-slate-500 mb-2 uppercase">Plato</label>
-                                <select id="mealType" class="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none bg-white text-xs">
+                                <select id="mealType" class="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none bg-white text-xs text-slate-700">
                                     <option value="almuerzo">Principal</option>
                                     <option value="desayuno">Desayuno</option>
                                     <option value="postre">Postre</option>
@@ -102,7 +102,7 @@
                             </div>
                             <div>
                                 <label class="block text-xs font-bold text-slate-500 mb-2 uppercase">Dieta</label>
-                                <select id="diet" class="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none bg-white text-xs">
+                                <select id="diet" class="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none bg-white text-xs text-slate-700">
                                     <option value="ninguna">Cualquiera</option>
                                     <option value="vegetariana">Vegetariana</option>
                                     <option value="vegana">Vegana</option>
@@ -167,48 +167,80 @@
     <script>
         const modelName = "gemini-2.5-flash-preview-09-2025";
         
-        // Al cargar la página, comprobar si hay una clave en la URL o en memoria
         window.onload = () => {
             const hash = window.location.hash;
-            if (hash && hash.startsWith('#invite=')) {
-                const inviteKey = hash.replace('#invite=', '');
-                localStorage.setItem('chef_api_key', inviteKey);
-                // Limpiar la URL para que no se vea la clave siempre
-                window.history.replaceState(null, null, window.location.pathname);
-                showFamilyActivation();
+            if (hash && hash.includes('invite=')) {
+                // Usar URLSearchParams para ser más robustos
+                const params = new URLSearchParams(hash.replace('#', '?'));
+                const inviteKey = params.get('invite');
+                if (inviteKey) {
+                    localStorage.setItem('chef_api_key', inviteKey);
+                    window.history.replaceState(null, null, window.location.pathname);
+                    showFamilyActivation();
+                }
             } else if (localStorage.getItem('chef_api_key')) {
                 showFamilyActivation();
-                document.getElementById('customApiKey').value = localStorage.getItem('chef_api_key');
+                const stored = localStorage.getItem('chef_api_key');
+                if (stored) document.getElementById('customApiKey').value = stored;
             }
         };
 
         function showFamilyActivation() {
-            document.getElementById('familyBadge').classList.remove('hidden');
-            document.getElementById('standardBadge').classList.add('hidden');
-            document.getElementById('adminPanel').querySelector('summary').innerText = "⚙️ Configuración (Clave guardada)";
+            const badgeF = document.getElementById('familyBadge');
+            const badgeS = document.getElementById('standardBadge');
+            const summary = document.getElementById('adminPanel').querySelector('summary');
+            
+            if (badgeF) badgeF.classList.remove('hidden');
+            if (badgeS) badgeS.classList.add('hidden');
+            if (summary) summary.innerText = "⚙️ Configuración (Clave guardada)";
         }
 
         function generateShareLink() {
-            const key = document.getElementById('customApiKey').value.trim();
+            const keyInput = document.getElementById('customApiKey');
+            const key = keyInput.value.trim();
+            
             if (!key) {
                 showError("Primero ingresa una clave para generar el link.");
                 return;
             }
+            
             localStorage.setItem('chef_api_key', key);
-            const baseUrl = window.location.href.split('#')[0];
+            
+            // Construcción robusta de la URL base
+            const baseUrl = window.location.origin + window.location.pathname;
             const shareUrl = `${baseUrl}#invite=${key}`;
             
-            document.getElementById('shareUrlInput').value = shareUrl;
-            document.getElementById('shareLinkContainer').classList.remove('hidden');
+            const shareInput = document.getElementById('shareUrlInput');
+            const container = document.getElementById('shareLinkContainer');
+            
+            // Forzar limpieza y asignación para evitar que el navegador "pegue" cosas
+            shareInput.value = ""; 
+            shareInput.value = shareUrl;
+            
+            container.classList.remove('hidden');
         }
 
         function copyShareLink() {
             const input = document.getElementById('shareUrlInput');
+            const btn = document.getElementById('copyShareBtn');
+            
+            // Seleccionar y copiar
             input.select();
-            document.execCommand('copy');
-            const btn = document.querySelector('button[onclick="copyShareLink()"]');
-            btn.innerText = "¡Copiado!";
-            setTimeout(() => btn.innerText = "Copiar Link", 2000);
+            input.setSelectionRange(0, 99999); // Para móviles
+            
+            try {
+                document.execCommand('copy');
+                const originalText = btn.innerText;
+                btn.innerText = "¡Copiado!";
+                btn.classList.replace('bg-orange-500', 'bg-green-600');
+                
+                setTimeout(() => {
+                    btn.innerText = originalText;
+                    btn.classList.replace('bg-green-600', 'bg-orange-500');
+                }, 2000);
+            } catch (err) {
+                console.error('Error al copiar', err);
+            }
         }
 
         async function fetchWithRetry(url, payload, retries = 5, delay = 1000) {
@@ -234,7 +266,6 @@
         }
 
         async function generateRecipe() {
-            // Obtener la clave de: 1. Input | 2. LocalStorage | 3. Entorno (vacío)
             const manualKey = document.getElementById('customApiKey').value.trim();
             const storedKey = localStorage.getItem('chef_api_key');
             const apiKey = manualKey || storedKey || ""; 
@@ -289,7 +320,6 @@
                 let text = data.candidates?.[0]?.content?.parts?.[0]?.text;
 
                 if (text) {
-                    // Guardar clave exitosa
                     if (manualKey) localStorage.setItem('chef_api_key', manualKey);
 
                     text = text.replace(/^# (.*$)/gim, '<h1 class="text-3xl font-bold text-slate-900 mb-4">$1</h1>');
