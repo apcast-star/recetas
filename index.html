@@ -58,14 +58,15 @@
                         </div>
                         
                         <div>
-                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Modelo de IA (Nombres Técnicos)</label>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Modelo de IA</label>
                             <div class="flex gap-2">
                                 <select id="modelSelector" class="flex-1 p-2 text-xs border border-slate-200 rounded-lg outline-none bg-white">
                                     <option value="models/gemini-1.5-flash">Gemini 1.5 Flash (Recomendado)</option>
-                                    <option value="models/gemini-2.0-flash-exp">Gemini 2.0 Flash (Más rápido)</option>
-                                    <option value="models/gemini-1.5-pro">Gemini 1.5 Pro (Avanzado)</option>
+                                    <option value="models/gemini-1.5-flash-latest">Gemini 1.5 Flash Latest</option>
+                                    <option value="models/gemini-2.0-flash-exp">Gemini 2.0 Flash Exp</option>
+                                    <option value="models/gemini-1.5-pro">Gemini 1.5 Pro</option>
                                 </select>
-                                <button onclick="checkAvailableModels()" class="bg-slate-100 p-2 rounded-lg hover:bg-slate-200 transition-colors" title="Verificar modelos permitidos">
+                                <button onclick="checkAvailableModels()" class="bg-slate-100 p-2 rounded-lg hover:bg-slate-200 transition-colors" title="Actualizar lista de modelos disponibles">
                                     🔍
                                 </button>
                             </div>
@@ -168,7 +169,7 @@
                         </div>
                     </div>
                     <div class="p-8">
-                        <div id="recipeContent" class="prose prose-orange max-w-none text-slate-700"></div>
+                        <div id="recipeContent" class="prose prose-orange max-w-none text-slate-700 font-sans"></div>
                     </div>
                 </div>
 
@@ -178,7 +179,7 @@
     </div>
 
     <script>
-        const apiKey = ""; 
+        const systemApiKey = ""; 
         
         window.onload = () => {
             const hash = window.location.hash;
@@ -212,7 +213,7 @@
         }
 
         async function checkAvailableModels() {
-            const key = document.getElementById('customApiKey').value.trim() || apiKey;
+            const key = document.getElementById('customApiKey').value.trim() || systemApiKey;
             if (!key) {
                 showError("Primero introduce tu clave de API.");
                 return;
@@ -227,9 +228,10 @@
                     selector.innerHTML = '';
                     
                     data.models.forEach(m => {
+                        // Filtrar modelos que soporten generación de texto
                         if (m.name.includes('gemini') && m.supportedGenerationMethods.includes('generateContent')) {
                             const option = document.createElement('option');
-                            option.value = m.name; // Usar el nombre técnico completo: models/gemini...
+                            option.value = m.name; // Ej: models/gemini-1.5-flash
                             option.text = m.displayName;
                             selector.appendChild(option);
                         }
@@ -238,17 +240,19 @@
                     if (selector.querySelector(`option[value="${currentVal}"]`)) {
                         selector.value = currentVal;
                     }
-                    showError("¡Lista de modelos actualizada con éxito!");
+                    showError("¡Lista de modelos actualizada! Si el error 404 persiste, selecciona uno de los nuevos nombres de la lista.");
+                } else if (data.error) {
+                    showError(`Error de Google: ${data.error.message}`);
                 }
             } catch (err) {
-                showError("No se pudo conectar con Google. Revisa tu clave.");
+                showError("No se pudo conectar con los servidores de Google para listar los modelos.");
             }
         }
 
         function generateShareLink() {
             const manualKey = document.getElementById('customApiKey').value.trim();
             const selectedModel = document.getElementById('modelSelector').value;
-            const keyToShare = manualKey || apiKey;
+            const keyToShare = manualKey || systemApiKey;
             
             if (!keyToShare) {
                 showError("No hay clave para compartir. Ingresa una primero.");
@@ -279,7 +283,7 @@
             try {
                 document.execCommand('copy');
                 const btn = document.getElementById('copyShareBtn');
-                btn.innerText = "¡Enlace Copiado!";
+                btn.innerText = "¡Copiado!";
                 btn.classList.replace('bg-orange-500', 'bg-green-600');
                 setTimeout(() => {
                     btn.innerText = "Copiar Enlace";
@@ -304,36 +308,36 @@
                     const msg = errorData.error?.message || "Error desconocido";
 
                     if (response.status === 404) {
-                        throw new Error(`Error 404: El modelo especificado no existe o no tienes acceso.`);
+                        throw new Error(`Error 404: El modelo especificado no existe o no tienes acceso todavía (las claves nuevas a veces tardan unos minutos en activarse).`);
                     }
                     if (response.status === 401 || response.status === 403) {
-                        throw new Error("Clave de API inválida o sin permisos.");
+                        throw new Error(`Clave de API inválida o sin permisos (Error ${response.status}).`);
                     }
                 } catch (e) {
                     if (i === retries - 1 || e.message.includes("404") || e.message.includes("Clave")) throw e;
                 }
                 await new Promise(r => setTimeout(r, 1000 * (i + 1)));
             }
-            throw new Error("No se pudo obtener respuesta del Chef. Revisa la configuración.");
+            throw new Error("No se pudo obtener respuesta del Chef. Revisa la configuración de tu API Key.");
         }
 
         async function generateRecipe() {
             const manualKey = document.getElementById('customApiKey').value.trim();
             const storedKey = localStorage.getItem('chef_api_key');
-            const activeKey = manualKey || storedKey || apiKey;
+            const activeKey = manualKey || storedKey || systemApiKey;
 
-            // Detección automática del modelo:
-            const isPreview = (typeof __app_id !== 'undefined');
-            let modelToUse = isPreview 
+            // Determinar el modelo exacto a usar
+            const isPreviewEnv = (typeof __app_id !== 'undefined');
+            let modelToUse = isPreviewEnv 
                 ? "models/gemini-2.5-flash-preview-09-2025" 
                 : document.getElementById('modelSelector').value;
             
-            // Si el modelo no empieza por models/, se lo añadimos
+            // CORRECCIÓN CRÍTICA: Aseguramos que el nombre empiece por models/ pero SIN DUPLICARLO
             if (!modelToUse.startsWith('models/')) {
                 modelToUse = 'models/' + modelToUse;
             }
             
-            // Usamos v1beta siempre para asegurar compatibilidad total con Gemini 1.5 y 2.0
+            // Usamos v1beta para máxima compatibilidad con modelos experimentales y Flash 2.0
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/${modelToUse}:generateContent?key=${activeKey}`;
             
             const ingredients = document.getElementById('ingredients').value.trim();
@@ -349,7 +353,7 @@
             const refreshIcon = document.getElementById('refreshIcon');
 
             if (!ingredients) {
-                showError("¡Escribe los ingredientes para poder ayudarte!");
+                showError("¡Dime qué tienes en la despensa para empezar!");
                 return;
             }
 
@@ -361,18 +365,22 @@
                 setTimeout(() => refreshIcon.classList.remove('animate-spin-once'), 500);
             }
 
-            const systemPrompt = `Eres un Chef Michelin experto. Crea una receta creativa con: ${ingredients}. 
-            Tipo: ${mealType}. Dieta: ${diet}.
-            IMPORTANTE: Ingredientes y pasos en líneas separadas.
-            Formato:
+            const systemPrompt = `Eres un Chef experto Michelin en España. Crea una receta creativa y deliciosa con estos ingredientes: ${ingredients}. 
+            Tipo de comida: ${mealType}. Restricción dietética: ${diet}.
+            IMPORTANTE: Los ingredientes y los pasos de preparación DEBEN estar en líneas separadas.
+            
+            Formato de respuesta:
             # [Nombre de la Receta]
             **Tiempo:** [X] min | **Raciones:** [X]
+            
             ### 🛒 Ingredientes
-            - Cantidad de ingrediente
+            - [Ingrediente con cantidad]
+            
             ### 👨‍🍳 Preparación
-            1. Paso detallado
-            ### 💡 Truco
-            [Consejo del chef]`;
+            1. [Paso detallado]
+            
+            ### 💡 Truco del Chef
+            [Consejo corto y útil]`;
 
             try {
                 const data = await fetchWithRetry(apiUrl, { 
